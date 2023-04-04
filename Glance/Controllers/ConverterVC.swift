@@ -7,11 +7,6 @@
 
 import UIKit
 
-// when switching a currency, update rates
-
-// USE UILABEL INSTEAD OF UITEXTFIELD?
-// remove some crypto
-
 class ConverterVC: UIViewController {
     var tableView = UITableView()
     var numpadView = NumpadView()
@@ -164,13 +159,19 @@ class ConverterVC: UIViewController {
     func selectFirstCell() {
         guard let firstCell = getVisibleCells().first else { return }
         firstCell.setSelected(true, animated: true)
-        selectedCell = firstCell // I have to set this manually because didSelectRowAt method doesn't get called when I select a row with tableView.selectRow method
+        selectedCell = firstCell // I have to set this manually because didSelectRowAt method doesn't get called when I select a row with setSelected or tableView.selectRow methods
     }
     
     
     func didSelectCell() {
-        selectedCell?.numberTextField.becomeFirstResponder()
-        updatePlaceholderInAllTextFields()
+        updatePlaceholderNumberInAllCells()
+        showBlinkingCursorForSelectedCellAndHideForOtherCells()
+    }
+    
+    
+    func showBlinkingCursorForSelectedCellAndHideForOtherCells() {
+        getVisibleCells().forEach { $0.showingCursor = false }
+        selectedCell?.showingCursor = true
     }
     
     
@@ -190,7 +191,7 @@ class ConverterVC: UIViewController {
     }
     
     
-    func updatePlaceholderInAllTextFields() {
+    func updatePlaceholderNumberInAllCells() {
         guard let selectedCell else { return }
 
         for cell in getVisibleCells() {
@@ -200,57 +201,54 @@ class ConverterVC: UIViewController {
             } else {
                 convertedAmount = selectedCell.currency.rate == 0 ? 0 : (100 / selectedCell.currency.rate) * cell.currency.rate // to avoid division by 0 if currency rate is 0
             }
-            cell.numberTextField.placeholder = String(format: "%.2f", convertedAmount)
+            cell.placeholderNumber = String(format: "%.2f", convertedAmount)
         }
     }
     
     
-    func updateTextInAllTextFields() {
+    func updateNumberInAllCells() {
         guard let selectedCell else { return }
-        guard let textFiledText = selectedCell.numberTextField.text else { return }
-        
-        if textFiledText == "" {
-            getVisibleCells().forEach { $0.numberTextField.text = "" }
+
+        if selectedCell.number == "" {
+            getVisibleCells().forEach { $0.number = "" }
             return
         }
-        
+
         for cell in getVisibleCells() {
             let convertedAmount: String
-            
+
             if cell == selectedCell {
-                convertedAmount = textFiledText
+                convertedAmount = selectedCell.number
             } else {
-                guard let textFiledText = Double(textFiledText) else {
-                    print("Could not convert \(textFiledText) to Double")
+                guard let textFiledText = Double(selectedCell.number) else {
+                    print("Could not convert \(selectedCell.number) to Double")
                     continue
                 }
-                
+
                 let amount = (textFiledText / selectedCell.currency.rate) * cell.currency.rate
                 convertedAmount = String(format: "%.2f", amount)
             }
-            
-            cell.numberTextField.text = convertedAmount
+
+            cell.number = convertedAmount
         }
     }
-    
 }
 
 extension ConverterVC: NumpadViewDelegate {
     
     func didTapButton(_ button: UIButton) {
-        guard let button = button.titleLabel?.text else { return }
+        guard let buttonText = button.titleLabel?.text else { return }
         guard let selectedCell else { return }
-        
-        switch button {
+
+        switch buttonText {
         case "DEL":
-            selectedCell.numberTextField.text? = String(selectedCell.numberTextField.text?.dropLast() ?? "")
+            selectedCell.number = String(selectedCell.number.dropLast())
         case ".":
-            guard let numberTextFieldText = selectedCell.numberTextField.text else { return }
-            if numberTextFieldText == "" {
-                selectedCell.numberTextField.text! = "0."
+            if selectedCell.number == "" {
+                selectedCell.number = "0."
             } else {
-                if !numberTextFieldText.contains(".") {
-                    selectedCell.numberTextField.text! += "."
+                if !selectedCell.number.contains(".") {
+                    selectedCell.number += "."
                 }
             }
         case "+":
@@ -262,19 +260,15 @@ extension ConverterVC: NumpadViewDelegate {
         case "÷":
             break
         default:
-            selectedCell.numberTextField.text! += button
+            selectedCell.number += buttonText
         }
-        
-        updateTextInAllTextFields()
-        
-        // if operation symbols -> show calculatorTextField above numberTextField and make it the first responder
+        updateNumberInAllCells()
     }
     
 }
 
 
 extension ConverterVC: UITableViewDataSource {
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return currencies.count
     }
@@ -285,7 +279,6 @@ extension ConverterVC: UITableViewDataSource {
         cell.configure(with: currency)
         return cell
     }
-    
 }
 
 

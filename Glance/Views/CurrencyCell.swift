@@ -9,21 +9,53 @@ import UIKit
 
 class CurrencyCell: UITableViewCell {
     static let identifier = "CurrencyCell"
-    var currency: Currency! // FIXME: implicitly unwrapped optional
-    var amount: Double?
-    var iconImageView = UIImageView()
-    var codeLabel = UILabel()
-    var numberTextField = UITextField()
-    var currencyFullNameLabel = UILabel()
+    var currency: Currency!
+    
+    var number = "" {
+        didSet {
+            numberLabel.text = number
+            placeholderNumberLabel.alpha = number == "" ? 1 : 0
+        }
+    }
+    
+    var placeholderNumber = "" {
+        didSet {
+            placeholderNumberLabel.text = placeholderNumber
+        }
+    }
+    
+    var showingCursor = false {
+        didSet {
+            if showingCursor {
+                blinkingCursor.isHidden = false
+                blinkingCursor.layer.addBlinkingAnimation()
+            } else {
+                blinkingCursor.isHidden = true
+                blinkingCursor.layer.removeAllAnimations()
+            }
+            
+        }
+    }
+    
+    private let iconImageView = UIImageView() // FIXME: should I use lazy var?
+    private let codeLabel = UILabel()
+    private let numberView = UIView()
+    private let numberLabel = UILabel()
+    private let placeholderNumberLabel = UILabel()
+    private let blinkingCursor = UIView()
+    private let currencyFullNameLabel = UILabel()
+    
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        self.setupViews()
+        setupViews()
     }
-
+    
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
     
     
     func configure(with currency: Currency) {
@@ -51,19 +83,29 @@ class CurrencyCell: UITableViewCell {
         codeLabel.translatesAutoresizingMaskIntoConstraints = false
         codeLabel.font = UIFont(name: "DIN Round Pro", size: 17)
         
-        contentView.addSubview(numberTextField)
-        numberTextField.translatesAutoresizingMaskIntoConstraints = false
-        numberTextField.attributedPlaceholder = NSAttributedString(string: "0.00", attributes: [.foregroundColor: UIColor.label.withAlphaComponent(0.4)])
-        numberTextField.textAlignment = .right
-        numberTextField.adjustsFontSizeToFitWidth = true
-        numberTextField.minimumFontSize = 15
-//        numberTextField.isUserInteractionEnabled = false
-        numberTextField.font = UIFont(name: "DIN Round Pro", size: 23)
+        contentView.addSubview(numberView)
+        numberView.translatesAutoresizingMaskIntoConstraints = false
         
-        let touchesDisablerView = UIView() // disables touches in numberTextField
-        contentView.addSubview(touchesDisablerView)
-        touchesDisablerView.translatesAutoresizingMaskIntoConstraints = false
-        touchesDisablerView.backgroundColor = .clear
+        numberView.addSubview(placeholderNumberLabel)
+        placeholderNumberLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        placeholderNumberLabel.textColor = .label.withAlphaComponent(0.4)
+        placeholderNumberLabel.textAlignment = .right
+        placeholderNumberLabel.adjustsFontSizeToFitWidth = true
+        placeholderNumberLabel.minimumScaleFactor = 0.4
+        placeholderNumberLabel.font = UIFont(name: "DIN Round Pro", size: 23)
+        
+        numberView.addSubview(numberLabel)
+        numberLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        numberLabel.textAlignment = .right
+        numberLabel.adjustsFontSizeToFitWidth = true
+        numberLabel.minimumScaleFactor = 0.4
+        numberLabel.font = UIFont(name: "DIN Round Pro", size: 23)
+        
+        addSubview(blinkingCursor)
+        blinkingCursor.translatesAutoresizingMaskIntoConstraints = false
+        blinkingCursor.backgroundColor = .systemBlue
         
         contentView.addSubview(currencyFullNameLabel)
         currencyFullNameLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -80,18 +122,42 @@ class CurrencyCell: UITableViewCell {
             codeLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             codeLabel.leftAnchor.constraint(equalTo: iconImageView.rightAnchor, constant: 12),
             
-            numberTextField.bottomAnchor.constraint(equalTo: codeLabel.bottomAnchor, constant: 3),
-            numberTextField.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: -16),
-            numberTextField.leftAnchor.constraint(equalTo: codeLabel.rightAnchor, constant: 12),
+            numberView.bottomAnchor.constraint(equalTo: codeLabel.bottomAnchor, constant: 3),
+            numberView.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: -16),
+            numberView.leftAnchor.constraint(equalTo: codeLabel.rightAnchor, constant: 12),
             
-            touchesDisablerView.topAnchor.constraint(equalTo: numberTextField.topAnchor),
-            touchesDisablerView.bottomAnchor.constraint(equalTo: numberTextField.bottomAnchor),
-            touchesDisablerView.leftAnchor.constraint(equalTo: numberTextField.leftAnchor),
-            touchesDisablerView.rightAnchor.constraint(equalTo: numberTextField.rightAnchor),
+            placeholderNumberLabel.topAnchor.constraint(equalTo: numberView.topAnchor),
+            placeholderNumberLabel.bottomAnchor.constraint(equalTo: numberView.bottomAnchor),
+            placeholderNumberLabel.leftAnchor.constraint(equalTo: numberView.leftAnchor),
+            placeholderNumberLabel.rightAnchor.constraint(equalTo: numberView.rightAnchor),
             
-            currencyFullNameLabel.topAnchor.constraint(equalTo: numberTextField.bottomAnchor),
-            currencyFullNameLabel.rightAnchor.constraint(equalTo: numberTextField.rightAnchor)
+            numberLabel.topAnchor.constraint(equalTo: numberView.topAnchor),
+            numberLabel.bottomAnchor.constraint(equalTo: numberView.bottomAnchor),
+            numberLabel.leftAnchor.constraint(equalTo: numberView.leftAnchor),
+            numberLabel.rightAnchor.constraint(equalTo: numberView.rightAnchor),
             
+            blinkingCursor.topAnchor.constraint(equalTo: numberView.topAnchor, constant: 3),
+            blinkingCursor.bottomAnchor.constraint(equalTo: numberView.bottomAnchor, constant: -2),
+            blinkingCursor.rightAnchor.constraint(equalTo: numberView.rightAnchor, constant: 2),
+            blinkingCursor.widthAnchor.constraint(equalToConstant: 2),
+            
+            currencyFullNameLabel.topAnchor.constraint(equalTo: numberView.bottomAnchor),
+            currencyFullNameLabel.rightAnchor.constraint(equalTo: numberView.rightAnchor)
         ])
+    }
+    
+}
+
+extension CALayer {
+    func addBlinkingAnimation() {
+        let key = "opacity"
+        let animation = CABasicAnimation(keyPath: key)
+        animation.fromValue = 1.0
+        animation.toValue = 0.0
+        animation.duration = 0.54
+        animation.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.linear)
+        animation.autoreverses = true
+        animation.repeatCount = Float.greatestFiniteMagnitude
+        self.add(animation, forKey: key)
     }
 }
