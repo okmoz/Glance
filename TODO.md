@@ -18,7 +18,7 @@
 
 
 // when switching a currency, update rates
-// NO, I should save updated rates in UserDefaults every time I update them and then
+// NO, I should save the updated rates in UserDefaults every time I update them and then
 
 // 3 locations for rates:
 // 1. default rates in Constants: available always (when no internet and no new rates have been pulled from the API)

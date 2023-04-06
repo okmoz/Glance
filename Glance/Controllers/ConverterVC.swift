@@ -12,13 +12,11 @@ class ConverterVC: UIViewController {
     var numpadView = NumpadView()
     var headerView = HeaderView()
     var selectedCell: CurrencyCell? {
-        didSet {
-            guard selectedCell != oldValue else { return }
-            didSelectCell()
-        }
+        didSet { didSelectCell() }
     }
     
     var currencies = [Currency]()
+    var currencyRatesWithDate = Constants.defaultCurrencyRatesWithDate
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,6 +25,67 @@ class ConverterVC: UIViewController {
         configureHeaderView()
         configureTableView()
         setSixDefaultCurrencies()
+        updateRatesOfCurrencies()
+    }
+    
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        selectFirstCell()
+        Task {
+            await loadCurrencyRatesWithDate()
+            updateRatesOfCurrencies()
+            updateCells() // I don't want to call reloadData() instead of these because it stops all animations. Is there a better way?
+        }
+    }
+    
+    
+    // FIXME: put in a model?
+    func loadCurrencyRatesWithDate() async {
+        if let currencyRatesFromAPI = try? await NetworkManager.shared.getCurrencyRatesWithDate(){
+            currencyRatesWithDate = currencyRatesFromAPI
+            do {
+                try PersistenceManager.save(currencyRatesWithDate: currencyRatesFromAPI)
+            } catch {
+                print(error)
+            }
+        } else {
+            do {
+                let currencyRatesFromPersistentStorage = try PersistenceManager.load()
+                currencyRatesWithDate = currencyRatesFromPersistentStorage
+            } catch {
+                print(error)
+            }
+        }
+    }
+    
+    
+    func updateRatesOfCurrencies() {
+        currencies = currencies.map { currency in
+            guard let newRate = currencyRatesWithDate.currencyRates[currency.code] else {
+                print("Error: Missing currency rate for \(currency.code.uppercased())")
+                return currency
+            }
+            return Currency(code: currency.code, name: currency.name, symbol: currency.symbol, rate: newRate)
+        }
+    }
+    
+    
+    func updateCurrenciesForAllCells() {
+        for cell in getVisibleCells() {
+            for currency in currencies {
+                if currency.code == cell.currency.code {
+                    cell.configure(with: currency)
+                }
+            }
+        }
+    }
+    
+    
+    func updateCells() {
+        updateCurrenciesForAllCells()
+        updateNumberInAllCells()
+        updatePlaceholderNumberInAllCells()
     }
     
     
@@ -35,51 +94,7 @@ class ConverterVC: UIViewController {
         tableView.rowHeight = tableView.frame.size.height / CGFloat(currencies.count)
     }
     
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        selectFirstCell()
-        Task {
-            await loadData()
-        }
-    }
-    
-    
-    func loadData() async {
-        do {
-            let currencyRates = try await getCurrencyRates()
-            try updateCurrencyRates(with: currencyRates)
-        } catch {
-            print("Error: \(error)")
-        }
-    }
-    
-    
-    func getCurrencyRates() async throws -> [String: Double] {
-        return try await NetworkManager.shared.getAPIResult().currencyRates
-    }
-    
 
-    func updateCurrencyRates(with currencyRates: [String: Double]) throws {
-        guard !getVisibleCells().isEmpty else {
-            throw GLError.noVisibleCells
-        }
-        
-        guard !currencyRates.isEmpty else {
-            throw GLError.emptyCurrencyRates
-        }
-        
-        for cell in getVisibleCells() {
-            let code = cell.currency.code.lowercased()
-            guard let rate = currencyRates[code] else {
-                print("Error: Missing currency rate for \(code.uppercased())")
-                continue
-            }
-            cell.currency.rate = rate
-        }
-    }
-
-    
     func configureViewController() {
         view.backgroundColor = UIColor(named: "CurrencyBG")
         navigationController?.isNavigationBarHidden = true
@@ -177,12 +192,9 @@ class ConverterVC: UIViewController {
     
     func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let switchCurrencyAction = UIContextualAction(style: .normal, title: "Switch Currency") { [weak self] _,_,completion in
-            let currencyListVC = CurrencyListVC()
+            let currencyListVC = CurrencyPickerVC(indexPathOfCurrencyToReplace: indexPath, currentlyDisplayedCurrencies: self?.currencies ?? [])
             currencyListVC.delegate = self
-            currencyListVC.indexPathOfCurrencyToReplace = indexPath
-            currencyListVC.currentlyDisplayedCurrencies = self?.currencies
             self?.navigationController?.present(UINavigationController(rootViewController: currencyListVC), animated: true)
-
             completion(true)
         }
         switchCurrencyAction.image =  UIImage(systemName: "arrow.left.arrow.right")
@@ -193,7 +205,7 @@ class ConverterVC: UIViewController {
     
     func updatePlaceholderNumberInAllCells() {
         guard let selectedCell else { return }
-
+        
         for cell in getVisibleCells() {
             let convertedAmount: Double
             if cell == selectedCell {
@@ -208,15 +220,15 @@ class ConverterVC: UIViewController {
     
     func updateNumberInAllCells() {
         guard let selectedCell else { return }
-
+        
         if selectedCell.number == "" {
             getVisibleCells().forEach { $0.number = "" }
             return
         }
-
+        
         for cell in getVisibleCells() {
             let convertedAmount: String
-
+            
             if cell == selectedCell {
                 convertedAmount = selectedCell.number
             } else {
@@ -224,11 +236,11 @@ class ConverterVC: UIViewController {
                     print("Could not convert \(selectedCell.number) to Double")
                     continue
                 }
-
+                
                 let amount = (textFiledText / selectedCell.currency.rate) * cell.currency.rate
                 convertedAmount = String(format: "%.2f", amount)
             }
-
+            
             cell.number = convertedAmount
         }
     }
@@ -239,7 +251,7 @@ extension ConverterVC: NumpadViewDelegate {
     func didTapButton(_ button: UIButton) {
         guard let buttonText = button.titleLabel?.text else { return }
         guard let selectedCell else { return }
-
+        
         switch buttonText {
         case "DEL":
             selectedCell.number = String(selectedCell.number.dropLast())
@@ -293,6 +305,7 @@ extension ConverterVC: CurrencyListVCDelegate {
     func didPickCurrency(_ currency: Currency, indexPathOfCurrencyToReplace: IndexPath?) {
         guard let indexPathOfCurrencyToReplace else { return }
         currencies[indexPathOfCurrencyToReplace.row] = currency
+        updateRatesOfCurrencies()
         tableView.reloadData()
         selectFirstCell()
     }

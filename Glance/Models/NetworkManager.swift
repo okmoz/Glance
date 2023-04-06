@@ -21,14 +21,12 @@ class NetworkManager {
     
     private init() {}
     
-    func getAPIResult() async throws -> APIResult {
+    func getCurrencyRatesWithDate() async throws -> CurrencyRatesWithDate {
         let endpoint = baseURL
-        
         guard let url = URL(string: endpoint) else { throw GLError.invalidURL }
-        
         let (data, _) = try await URLSession.shared.data(from: url)
-        
-        let APIResult = try JSONDecoder().decode(APIResult.self, from: data)
-        return APIResult
+        let currencyRatesWithDate = try JSONDecoder().decode(CurrencyRatesWithDate.self, from: data)
+//        try await Task.sleep(until: .now + .seconds(2), clock: .continuous)
+        return currencyRatesWithDate
     }
 }

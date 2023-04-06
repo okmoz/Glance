@@ -9,6 +9,8 @@ import Foundation
 
 enum GLError: Error {
     case noVisibleCells
-    case emptyCurrencyRates
     case missingCurrencyRate(code: String)
+    case errorLoadingRatesResultFromUserDefaults
+    case errorDecodingRatesResultFromUserDefaults
+    case errorSavingRates
 }

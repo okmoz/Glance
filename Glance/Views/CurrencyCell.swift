@@ -9,7 +9,7 @@ import UIKit
 
 class CurrencyCell: UITableViewCell {
     static let identifier = "CurrencyCell"
-    var currency: Currency!
+    private(set) var currency: Currency!
     
     var number = "" {
         didSet {
@@ -57,7 +57,6 @@ class CurrencyCell: UITableViewCell {
     }
     
     
-    
     func configure(with currency: Currency) {
         self.currency = currency
         iconImageView.image = currency.icon
@@ -73,7 +72,7 @@ class CurrencyCell: UITableViewCell {
         contentView.addSubview(iconImageView)
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         iconImageView.layer.borderWidth = 0.5
-        iconImageView.backgroundColor = .systemGray
+        iconImageView.backgroundColor = .systemGray.withAlphaComponent(0.05)
         iconImageView.layer.borderColor = UIColor.systemGray.withAlphaComponent(0.2).cgColor
         iconImageView.layer.cornerRadius = 2
         iconImageView.clipsToBounds = true
@@ -104,6 +103,7 @@ class CurrencyCell: UITableViewCell {
         numberLabel.font = UIFont(name: "DIN Round Pro", size: 23)
         
         addSubview(blinkingCursor)
+        blinkingCursor.isHidden = true
         blinkingCursor.translatesAutoresizingMaskIntoConstraints = false
         blinkingCursor.backgroundColor = .systemBlue
         

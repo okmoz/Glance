@@ -1,5 +1,5 @@
 //
-//  CurrencyListVC.swift
+//  CurrencyPickerVC.swift
 //  Glance
 //
 //  Created by Nazarii Zomko on 29.03.2023.
@@ -8,12 +8,23 @@
 import UIKit
 
 
-class CurrencyListVC: UIViewController {
+class CurrencyPickerVC: UIViewController {
     var tableView: UITableView!
-    var indexPathOfCurrencyToReplace: IndexPath?
-    var currentlyDisplayedCurrencies: [Currency]? // this will enable me to show checkmarks for currencies that are displayed in ConverterVC
+    var indexPathOfCurrencyToReplace: IndexPath
+    var currentlyDisplayedCurrencies: [Currency] // this will enable me to show checkmarks for currencies that are displayed in ConverterVC
     
     weak var delegate: CurrencyListVCDelegate?
+    
+    init(indexPathOfCurrencyToReplace: IndexPath, currentlyDisplayedCurrencies: [Currency], delegate: CurrencyListVCDelegate? = nil) {
+        self.indexPathOfCurrencyToReplace = indexPathOfCurrencyToReplace
+        self.currentlyDisplayedCurrencies = currentlyDisplayedCurrencies
+        self.delegate = delegate
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -36,7 +47,7 @@ class CurrencyListVC: UIViewController {
 }
 
 
-extension CurrencyListVC: UITableViewDataSource {
+extension CurrencyPickerVC: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return currencies.count
@@ -49,17 +60,15 @@ extension CurrencyListVC: UITableViewDataSource {
         config.imageProperties.maximumSize = CGSize(width: 25, height: 25)
         config.imageProperties.cornerRadius = 1
         config.image = currency.icon
-        
-        if let currentlyDisplayedCurrencies {
-            if currentlyDisplayedCurrencies.contains(currency) {
-                let checkmark = UIImageView(image: UIImage(named: "check"))
-                checkmark.frame = CGRect(x: 0, y: 0, width: 16, height: 16)
-                cell.accessoryView = checkmark
-            } else {
-                cell.accessoryView = nil
-            }
-//            cell.accessoryType = currentlyDisplayedCurrencies.contains(currency) ? .checkmark : .none
+
+        if currentlyDisplayedCurrencies.contains(where: { $0.code == currency.code }) {
+            let checkmark = UIImageView(image: UIImage(named: "check"))
+            checkmark.frame = CGRect(x: 0, y: 0, width: 16, height: 16)
+            cell.accessoryView = checkmark
+        } else {
+            cell.accessoryView = nil
         }
+//        cell.accessoryType = currentlyDisplayedCurrencies.contains(currency) ? .checkmark : .none
 
 
         let currencyAttributes: [NSAttributedString.Key: Any] = [
@@ -84,7 +93,7 @@ extension CurrencyListVC: UITableViewDataSource {
 }
 
 
-extension CurrencyListVC: UITableViewDelegate {
+extension CurrencyPickerVC: UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let currency = currencies[indexPath.row]
