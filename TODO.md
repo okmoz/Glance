@@ -2,7 +2,6 @@
 
 
 - save lastEditedCell because it should show calculations if you click off it and click back on it
-- numpad: button borders when tapped
 - make animations: cell animations when tapped, when no more numbers in a text field, when currency rates did update
 
 - country names property on Currency for search
@@ -15,10 +14,6 @@
 - select last selected cell instead of first cell. if no last cellected, select first cell
 
 - handle Bitcoin: round up to more than 2 after comma
-
-
-// when switching a currency, update rates
-// NO, I should save the updated rates in UserDefaults every time I update them and then
 
 // 3 locations for rates:
 // 1. default rates in Constants: available always (when no internet and no new rates have been pulled from the API)

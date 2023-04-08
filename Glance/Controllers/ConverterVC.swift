@@ -25,7 +25,7 @@ class ConverterVC: UIViewController {
         configureHeaderView()
         configureTableView()
         setSixDefaultCurrencies()
-        updateRatesOfCurrencies()
+        updateRatesForCurrencies()
     }
     
     
@@ -34,8 +34,8 @@ class ConverterVC: UIViewController {
         selectFirstCell()
         Task {
             await loadCurrencyRatesWithDate()
-            updateRatesOfCurrencies()
-            updateCells() // I don't want to call reloadData() instead of these because it stops all animations. Is there a better way?
+            updateRatesForCurrencies()
+            updateCells() // I don't want to call reloadData() instead of this because it stops all animations. Is there a better way?
         }
     }
     
@@ -60,7 +60,7 @@ class ConverterVC: UIViewController {
     }
     
     
-    func updateRatesOfCurrencies() {
+    func updateRatesForCurrencies() {
         currencies = currencies.map { currency in
             guard let newRate = currencyRatesWithDate.currencyRates[currency.code] else {
                 print("Error: Missing currency rate for \(currency.code.uppercased())")
@@ -305,7 +305,7 @@ extension ConverterVC: CurrencyListVCDelegate {
     func didPickCurrency(_ currency: Currency, indexPathOfCurrencyToReplace: IndexPath?) {
         guard let indexPathOfCurrencyToReplace else { return }
         currencies[indexPathOfCurrencyToReplace.row] = currency
-        updateRatesOfCurrencies()
+        updateRatesForCurrencies()
         tableView.reloadData()
         selectFirstCell()
     }
