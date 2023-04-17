@@ -9,6 +9,8 @@ import Foundation
 
 
 enum Constants {
+    static let mathSigns = ["+", "-", "×", "÷"]
+    
     static let currencies = [
         Currency(code: "afn", name: "Afghan Afghani", symbol: "", rate: 0.0),
         Currency(code: "all", name: "Albanian Lek", symbol: "", rate: 0.0),

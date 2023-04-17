@@ -36,8 +36,7 @@ class NumpadView: UIView {
             config.baseForegroundColor = UIColor(named: "NumpadButtonTitleColor")
             
             var attrTitle = AttributedString(title)
-            let mathSigns = ["+", "-", "×", "÷"]
-            var titleFont = mathSigns.contains(title) ? UIFont(name: "Roboto Mono", size: 32) : UIFont(name: "DIN Round Pro", size: 23)
+            var titleFont = Constants.mathSigns.contains(title) ? UIFont(name: "Roboto Mono", size: 32) : UIFont(name: "DIN Round Pro", size: 23)
             if title == "-" { titleFont = UIFont(name: "Roboto Mono", size: 40) }
             attrTitle.font = titleFont
             config.attributedTitle = attrTitle
