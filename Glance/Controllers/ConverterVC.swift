@@ -39,7 +39,8 @@ class ConverterVC: UIViewController {
         Task {
             await loadCurrencyRatesWithDate()
             updateRatesForCurrencies()
-            updateCells() // I don't want to call reloadData() instead of this because it stops all animations. Is there a better way?
+            tableView.reloadData()
+            selectFirstCell()
         }
     }
     
@@ -72,24 +73,6 @@ class ConverterVC: UIViewController {
             }
             return Currency(code: currency.code, name: currency.name, symbol: currency.symbol, rate: newRate)
         }
-    }
-    
-    
-    func updateCurrenciesInAllCells() {
-        for cell in getVisibleCells() {
-            for currency in currencies {
-                if currency.code == cell.currency.code {
-                    cell.configure(with: currency)
-                }
-            }
-        }
-    }
-    
-    
-    func updateCells() {
-        updateCurrenciesInAllCells()
-        updateNumberInAllCells()
-        updatePlaceholderInAllCells()
     }
     
     
@@ -182,22 +165,6 @@ class ConverterVC: UIViewController {
     
     func didSelectCell() {
         updatePlaceholderInAllCells()
-        guard let selectedCell else { return }
-        selectedCell.mathExpressionTextField.isHidden = false
-        
-        if let mathExpressionTextFieldText = selectedCell.mathExpressionTextField.text, !mathExpressionTextFieldText.isEmpty {
-            selectedCell.activeField = .mathExpression
-        } else {
-            selectedCell.activeField = .number
-        }
-        
-        selectedCell.backgroundColor = UIColor(named: "SelectedCurrencyColor") // FIXME: use directly inside the cell mb?
-    }
-    
-    func didDeselectCell(_ cell: CurrencyCell) {
-        cell.mathExpressionTextField.isHidden = true
-        cell.activeField = .none
-        cell.backgroundColor = UIColor(named: "CurrencyBG")
     }
     
     
@@ -229,7 +196,7 @@ class ConverterVC: UIViewController {
     }
     
     
-    func updateNumberInAllCells() {
+    func updateNumberTextFieldInAllCells() {
         guard let selectedCell else { return }
         guard let textFiledText = selectedCell.numberTextField.text else { return }
         
@@ -263,9 +230,6 @@ extension ConverterVC: NumpadViewDelegate {
     func didTapButton(_ button: UIButton) {
         guard let buttonText = button.titleLabel?.text else { return }
         
-        // FIXME: maybe first select an appropriate text field and then handle button press
-        // make sure to only add a symbol if it is on a mathTF
-        
         switch buttonText {
         case "DEL":
             handleDeletePress()
@@ -279,27 +243,27 @@ extension ConverterVC: NumpadViewDelegate {
             break
         }
         
-        if lastCellWithActiveMathExpressionField != selectedCell {
-            lastCellWithActiveMathExpressionField?.mathExpressionTextField.text = ""
-        }
-        
-        chooseAppropriateTextFieldToShowBlinkingCursor()
+        clearMathExpressionTextFieldIfNeeded()
+        setActiveFieldForSelectedCell()
         calculateMathExpressionForSelectedCell()
-        updateNumberInAllCells()
+        updateNumberTextFieldInAllCells()
     }
     
+    func clearMathExpressionTextFieldIfNeeded() {
+        if lastCellWithActiveMathExpressionField?.currency.code != selectedCell?.currency.code {
+            lastCellWithActiveMathExpressionField?.mathExpressionTextField.text = ""
+        }
+    }
     
-    // FIXME: rename this
-    func chooseAppropriateTextFieldToShowBlinkingCursor() {
+    func setActiveFieldForSelectedCell() {
         guard let selectedCell else { return }
         
-        // set activeField to appropriate field and calculate -- make 2 separate functions?
-        if let mathExpressionTextFieldText = selectedCell.mathExpressionTextField.text, !mathExpressionTextFieldText.isEmpty {
-            if mathExpressionTextFieldText.containsMathSign() {
+        if let mathExpression = selectedCell.mathExpressionTextField.text, !mathExpression.isEmpty {
+            if mathExpression.containsMathSign() {
                 selectedCell.activeField = .mathExpression
                 lastCellWithActiveMathExpressionField = selectedCell
             } else {
-                selectedCell.mathExpressionTextField.text = "" // remove text from mathTF if it doesn't contain a math symbol
+                selectedCell.mathExpressionTextField.text = "" // removes text from mathTF if it doesn't contain a math symbol
                 selectedCell.activeField = .number
             }
         } else {
@@ -307,21 +271,17 @@ extension ConverterVC: NumpadViewDelegate {
         }
     }
     
-    
     func calculateMathExpressionForSelectedCell() {
         guard let selectedCell else { return }
         guard let mathExpression = selectedCell.mathExpressionTextField.text, !mathExpression.isEmpty else { return }
         
-        let mathExpressionToCalculate = mathExpression.isLastCharacterMathSign() ? mathExpression.replacingLastCharacter(with: "") : mathExpression
-        
         do {
-            let calculation = try calculate(using: mathExpressionToCalculate)
+            let calculation = try calculate(using: mathExpression.convertingToValidMathExpression())
             selectedCell.numberTextField.text = calculation.stringWithoutZeroFraction()
         } catch {
             print(error)
         }
     }
-    
     
     func handleDeletePress() {
         guard let activeTextField = selectedCell?.getActiveTextField() else { return }
@@ -331,18 +291,20 @@ extension ConverterVC: NumpadViewDelegate {
     func handleDotPress() {
         guard let activeTextField = selectedCell?.getActiveTextField() else { return }
         guard let activeTextFieldText = activeTextField.text else { return } // FIXME: what will happen if text == nil?
-        if activeTextFieldText == "" {
-            activeTextField.text! = "0."
+        
+        let lastNumber = getLastNumber(from: activeTextFieldText)
+        if lastNumber == "" {
+            activeTextField.text! += "0."
+        } else if lastNumber.contains(".") {
+            return
         } else {
-            #warning("it can contain more than one '.'")
-            if !activeTextFieldText.contains(".") {
-                activeTextField.text! += "."
-            }
+            activeTextField.text! += "."
         }
     }
     
     func handleSymbolPress(symbol: String) {
         guard let selectedCell else { return }
+
         if let mathExpressionTextFieldText = selectedCell.mathExpressionTextField.text, !mathExpressionTextFieldText.isEmpty {
             if mathExpressionTextFieldText.isLastCharacterMathSign() {
                 selectedCell.mathExpressionTextField.text = mathExpressionTextFieldText.replacingLastCharacter(with: symbol)
@@ -353,16 +315,21 @@ extension ConverterVC: NumpadViewDelegate {
             if let numberTextFieldText = selectedCell.numberTextField.text, !numberTextFieldText.isEmpty {
                 selectedCell.mathExpressionTextField.text?.append(numberTextFieldText + symbol)
             } else {
-                return
+                selectedCell.mathExpressionTextField.text?.append("0.0" + symbol)
             }
         }
     }
     
     func handleNumberPress(number: String) {
         guard let activeTextField = selectedCell?.getActiveTextField() else { return }
-        activeTextField.text! += number
+        if activeTextField.text == "0" && number == "0" {
+            return
+        } else if activeTextField.text == "0" && number != "0" {
+            activeTextField.text? = number // if TF text is "0" and pressed number is "3", it will replace "0" with "3"
+        } else {
+            activeTextField.text! += number
+        }
     }
-    
     
     func calculate(using text: String) throws -> Double { // move to a separate model?
         let mathString = text.replacingOccurrences(of: "×", with: "*").replacingOccurrences(of: "÷", with: "/") // MathExpression class accepts only "*" and "/"
@@ -370,6 +337,10 @@ extension ConverterVC: NumpadViewDelegate {
         return expression.evaluate()
     }
     
+    func getLastNumber(from text: String) -> String {
+        let numbers = text.components(separatedBy: CharacterSet(charactersIn: Constants.mathSigns.joined()))
+        return numbers.last ?? ""
+    }
 }
 
 
@@ -379,10 +350,8 @@ extension ConverterVC: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: CurrencyCell.identifier, for: indexPath) as! CurrencyCell
         let currency = currencies[indexPath.row]
-        cell.configure(with: currency)
-        return cell
+        return CurrencyCell(currency: currency, reuseIdentifier: CurrencyCell.identifier) // I don't use dequeueReusableCell here on purpose; 3 reasons: 1) I don't need performance benefits, 2) I want tableView to create new cells each time, 3) I can use a custom init to pass currency and not having it implicitly unwrapped inside CurrencyCell
     }
 }
 
@@ -391,17 +360,11 @@ extension ConverterVC: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         selectedCell = (tableView.cellForRow(at: indexPath) as! CurrencyCell)
     }
-    
-    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        let deselectedCell = (tableView.cellForRow(at: indexPath) as! CurrencyCell)
-        didDeselectCell(deselectedCell)
-    }
 }
 
 
 extension ConverterVC: CurrencyListVCDelegate {
-    func didPickCurrency(_ currency: Currency, indexPathOfCurrencyToReplace: IndexPath?) {
-        guard let indexPathOfCurrencyToReplace else { return }
+    func didPickCurrency(_ currency: Currency, indexPathOfCurrencyToReplace: IndexPath) {
         currencies[indexPathOfCurrencyToReplace.row] = currency
         updateRatesForCurrencies()
         tableView.reloadData()

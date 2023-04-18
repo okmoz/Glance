@@ -106,5 +106,5 @@ extension CurrencyPickerVC: UITableViewDelegate {
 
 // MARK: CurrencyListVCDelegate
 protocol CurrencyListVCDelegate: AnyObject {
-    func didPickCurrency(_ currency: Currency, indexPathOfCurrencyToReplace: IndexPath?)
+    func didPickCurrency(_ currency: Currency, indexPathOfCurrencyToReplace: IndexPath)
 }

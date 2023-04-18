@@ -41,24 +41,44 @@ class CurrencyCell: UITableViewCell {
         }
     }
     
+    override func setSelected(_ selected: Bool, animated: Bool) {
+        super.setSelected(selected, animated: animated)
+        if selected {
+            mathExpressionTextField.isHidden = false
+            backgroundColor = UIColor(named: "SelectedCurrencyColor")
+            
+            if let mathExpressionTextFieldText = mathExpressionTextField.text, !mathExpressionTextFieldText.isEmpty {
+                activeField = .mathExpression
+            } else {
+                activeField = .number
+            }
+        } else {
+            backgroundColor = UIColor(named: "CurrencyBG")
+            mathExpressionTextField.isHidden = true
+            activeField = .none
+        }
+    }
     
-    var isNumberCursorVisible: Bool = false {
+    
+    private var isNumberCursorVisible: Bool = false {
         didSet {
             blinkingCursorForNumber.isHidden = !isNumberCursorVisible
             blinkingCursorForNumber.showBlinkingAnimation(isNumberCursorVisible)
         }
     }
     
-    var isMathExpressionCursorVisible: Bool = false {
+    private var isMathExpressionCursorVisible: Bool = false {
         didSet {
             blinkingCursorForMathExpression.isHidden = !isMathExpressionCursorVisible
             blinkingCursorForMathExpression.showBlinkingAnimation(isMathExpressionCursorVisible)
         }
     }
     
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    
+    init(currency: Currency, reuseIdentifier: String?) {
+        super.init(style: .default, reuseIdentifier: reuseIdentifier)
         setupViews()
+        configure(with: currency)
     }
     
     
@@ -67,7 +87,7 @@ class CurrencyCell: UITableViewCell {
     }
     
     
-    func configure(with currency: Currency) {
+    private func configure(with currency: Currency) {
         self.currency = currency
         iconImageView.image = currency.icon
         codeLabel.text = currency.code.uppercased()

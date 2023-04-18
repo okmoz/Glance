@@ -25,3 +25,7 @@
 - custom UITextField instead of adding blinking cursors?
 
 - explain in comment why do I need a didSelectCell() method
+
+- handle number starting with a symbol
+
+- opt: add space before and after a symbol
