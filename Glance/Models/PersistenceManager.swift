@@ -19,7 +19,7 @@ enum PersistenceManager {
         static let ratesWithDate = "ratesWithDate"
     }
     
-    static func load() throws -> CurrencyRatesWithDate {
+    static func loadCurrencyRatesWithDate() throws -> CurrencyRatesWithDate {
         guard let ratesResultData = userDefaults.object(forKey: Keys.ratesWithDate) as? Data else {
             throw GLError.errorLoadingRatesResultFromUserDefaults
         }

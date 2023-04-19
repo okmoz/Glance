@@ -44,8 +44,8 @@ class CurrencyCell: UITableViewCell {
     override func setSelected(_ selected: Bool, animated: Bool) {
         super.setSelected(selected, animated: animated)
         if selected {
-            mathExpressionTextField.isHidden = false
             backgroundColor = UIColor(named: "SelectedCurrencyColor")
+            mathExpressionTextField.isHidden = false
             
             if let mathExpressionTextFieldText = mathExpressionTextField.text, !mathExpressionTextFieldText.isEmpty {
                 activeField = .mathExpression
@@ -161,12 +161,13 @@ class CurrencyCell: UITableViewCell {
         currencyFullNameLabel.textAlignment = .right
         currencyFullNameLabel.font = UIFont(name: "DIN Round Pro", size: 9.5)
         currencyFullNameLabel.layer.opacity = 0.4
-
+        
+        let iconImageViewHeight = UIScreen.main.bounds.height / 28
         
         NSLayoutConstraint.activate([
             iconImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             iconImageView.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: 16),
-            iconImageView.heightAnchor.constraint(equalTo: contentView.heightAnchor, multiplier: 0.43),
+            iconImageView.heightAnchor.constraint(equalToConstant: iconImageViewHeight),
             iconImageView.widthAnchor.constraint(equalTo: iconImageView.heightAnchor),
             
             codeLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
@@ -210,6 +211,15 @@ extension UIView {
         } else {
             self.layer.removeAllAnimations()
         }
+    }
+    
+    func shake() {
+        let animation = CAKeyframeAnimation(keyPath: "transform.translation.x")
+        animation.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.linear)
+        animation.duration = 0.3
+//        animation.values = [0.0, -3.0, 4.0, -4.0, 4.0, -3.0, 0.0]
+        animation.values = [-3.0, 3.0, -3.0, 3.0, -3.0, 0.0]
+        layer.add(animation, forKey: "shake")
     }
 }
 

@@ -12,11 +12,7 @@ class ConverterVC: UIViewController {
     var tableView = UITableView()
     var numpadView = NumpadView()
     var headerView = HeaderView()
-    var selectedCell: CurrencyCell? {
-        didSet {
-            didSelectCell()
-        }
-    }
+    var selectedCell: CurrencyCell?
     var lastCellWithActiveMathExpressionField: CurrencyCell?
     
     var currencies = [Currency]()
@@ -39,7 +35,6 @@ class ConverterVC: UIViewController {
         Task {
             await loadCurrencyRatesWithDate()
             updateRatesForCurrencies()
-            tableView.reloadData()
             selectFirstCell()
         }
     }
@@ -47,7 +42,7 @@ class ConverterVC: UIViewController {
     
     // FIXME: put in a model?
     func loadCurrencyRatesWithDate() async {
-        if let currencyRatesFromAPI = try? await NetworkManager.shared.getCurrencyRatesWithDate(){
+        if let currencyRatesFromAPI = try? await NetworkManager.shared.fetchCurrencyRatesWithDate(){
             currencyRatesWithDate = currencyRatesFromAPI
             do {
                 try PersistenceManager.save(currencyRatesWithDate: currencyRatesFromAPI)
@@ -56,14 +51,13 @@ class ConverterVC: UIViewController {
             }
         } else {
             do {
-                let currencyRatesFromPersistentStorage = try PersistenceManager.load()
+                let currencyRatesFromPersistentStorage = try PersistenceManager.loadCurrencyRatesWithDate()
                 currencyRatesWithDate = currencyRatesFromPersistentStorage
             } catch {
                 print(error)
             }
         }
     }
-    
     
     func updateRatesForCurrencies() {
         currencies = currencies.map { currency in
@@ -73,14 +67,8 @@ class ConverterVC: UIViewController {
             }
             return Currency(code: currency.code, name: currency.name, symbol: currency.symbol, rate: newRate)
         }
+        tableView.reloadData()
     }
-    
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        tableView.rowHeight = tableView.frame.size.height / CGFloat(currencies.count)
-    }
-    
 
     func configureViewController() {
         view.backgroundColor = UIColor(named: "CurrencyBG")
@@ -95,7 +83,7 @@ class ConverterVC: UIViewController {
         
         NSLayoutConstraint.activate([
             numpadView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            numpadView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.307), // 0.307 / 0.3078 / 0.3481 / 0.352
+            numpadView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.352), // 0.307 / 0.3078 / 0.3481 / 0.352
             numpadView.leftAnchor.constraint(equalTo: view.leftAnchor),
             numpadView.rightAnchor.constraint(equalTo: view.rightAnchor),
         ])
@@ -157,13 +145,9 @@ class ConverterVC: UIViewController {
     
     
     func selectFirstCell() {
+        tableView.selectRow(at: IndexPath(row: 0, section: 0), animated: true, scrollPosition: .none)
         guard let firstCell = getVisibleCells().first else { return }
-        tableView.selectRow(at: IndexPath(row: 0, section: 0), animated: true, scrollPosition: .top)
-        selectedCell = firstCell // I have to set this manually because didSelectRowAt method doesn't get called when I select a row with setSelected or tableView.selectRow methods
-    }
-    
-    
-    func didSelectCell() {
+        selectedCell = firstCell // Although, selectedCell is set every time tableView's didSelectRowAt delegate method is called, I have to set this here because didSelectRowAt doesn't get called when I select a row programmatically (using tableView.selectRow or setSelected methods)
         updatePlaceholderInAllCells()
     }
     
@@ -285,7 +269,11 @@ extension ConverterVC: NumpadViewDelegate {
     
     func handleDeletePress() {
         guard let activeTextField = selectedCell?.getActiveTextField() else { return }
-        activeTextField.text? = String(activeTextField.text?.dropLast() ?? "")
+        if let activeTextFieldText = activeTextField.text, !activeTextFieldText.isEmpty {
+            activeTextField.text? = String(activeTextField.text?.dropLast() ?? "")
+        } else {
+            activeTextField.shake()
+        }
     }
     
     func handleDotPress() {
@@ -359,6 +347,17 @@ extension ConverterVC: UITableViewDataSource {
 extension ConverterVC: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         selectedCell = (tableView.cellForRow(at: indexPath) as! CurrencyCell)
+        updatePlaceholderInAllCells()
+        DispatchQueue.main.async { // this adds animation for cell height
+            tableView.beginUpdates()
+            tableView.endUpdates()
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        let selectedCellHeight = (tableView.frame.size.height / CGFloat(currencies.count) * 1.2)
+        let normalCellHeight = (tableView.frame.size.height - selectedCellHeight) / CGFloat(currencies.count - 1)
+        return indexPath == tableView.indexPathForSelectedRow ? selectedCellHeight : normalCellHeight
     }
 }
 
@@ -367,7 +366,6 @@ extension ConverterVC: CurrencyListVCDelegate {
     func didPickCurrency(_ currency: Currency, indexPathOfCurrencyToReplace: IndexPath) {
         currencies[indexPathOfCurrencyToReplace.row] = currency
         updateRatesForCurrencies()
-        tableView.reloadData()
         selectFirstCell()
     }
 }

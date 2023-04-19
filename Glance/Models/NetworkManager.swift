@@ -21,7 +21,7 @@ class NetworkManager {
     
     private init() {}
     
-    func getCurrencyRatesWithDate() async throws -> CurrencyRatesWithDate {
+    func fetchCurrencyRatesWithDate() async throws -> CurrencyRatesWithDate {
         let endpoint = baseURL
         guard let url = URL(string: endpoint) else { throw GLError.invalidURL }
         let (data, _) = try await URLSession.shared.data(from: url)
