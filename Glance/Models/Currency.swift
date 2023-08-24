@@ -12,5 +12,5 @@ struct Currency: Hashable {
     let name: String
     let symbol: String
     var rate: Double
-    var icon: UIImage { IconManager.getIcon(for: self) }
+    var icon: UIImage { IconManager.getIcon(for: self) } // FIXME: I don't like this
 }

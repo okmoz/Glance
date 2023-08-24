@@ -175,36 +175,38 @@ class ConverterVC: UIViewController {
             } else {
                 convertedAmount = selectedCell.currency.rate == 0 ? 0 : (100 / selectedCell.currency.rate) * cell.currency.rate // to avoid division by 0 if currency rate is 0
             }
-            cell.numberTextField.placeholder = String(format: "%.2f", convertedAmount)
+            cell.numberTextField.placeholderNumber = String(convertedAmount)
         }
     }
     
     
     func updateNumberTextFieldInAllCells() {
         guard let selectedCell else { return }
-        guard let textFiledText = selectedCell.numberTextField.text else { return }
+        let textFieldNumber = selectedCell.numberTextField.number
         
-        if textFiledText == "" {
-            getVisibleCells().forEach { $0.numberTextField.text = "" }
+        if textFieldNumber == "" {
+            getVisibleCells().forEach { $0.numberTextField.number = "" }
             return
         }
+        
+        // FIXME: could be optimized by moving 'guard let textFieldNumberAsDouble = Double(textFieldNumber)...' here
         
         for cell in getVisibleCells() {
             let convertedAmount: String
             
             if cell == selectedCell {
-                convertedAmount = textFiledText
+                convertedAmount = textFieldNumber
             } else {
-                guard let textFiledText = Double(textFiledText) else {
-                    print("Could not convert \(textFiledText) to Double")
+                guard let textFieldNumberAsDouble = Double(textFieldNumber) else {
+                    print("Could not convert \(textFieldNumber) to Double")
                     continue
                 }
-                
-                let amount = (textFiledText / selectedCell.currency.rate) * cell.currency.rate // FIXME: rename?
-                convertedAmount = String(format: "%.2f", amount)
+                // FIXME: what if rate == 0?
+                let amount = (textFieldNumberAsDouble / selectedCell.currency.rate) * cell.currency.rate // FIXME: rename?
+                convertedAmount = String(amount)
             }
             
-            cell.numberTextField.text = convertedAmount
+            cell.numberTextField.number = convertedAmount
         }
     }
 }
@@ -213,7 +215,7 @@ extension ConverterVC: NumpadViewDelegate {
     
     func didTapButton(_ button: UIButton) {
         guard let buttonText = button.titleLabel?.text else { return }
-        
+
         switch buttonText {
         case "DEL":
             handleDeletePress()
@@ -235,19 +237,19 @@ extension ConverterVC: NumpadViewDelegate {
     
     func clearMathExpressionTextFieldIfNeeded() {
         if lastCellWithActiveMathExpressionField?.currency.code != selectedCell?.currency.code {
-            lastCellWithActiveMathExpressionField?.mathExpressionTextField.text = ""
+            lastCellWithActiveMathExpressionField?.mathExpressionTextField.number = ""
         }
     }
     
     func setActiveFieldForSelectedCell() {
         guard let selectedCell else { return }
         
-        if let mathExpression = selectedCell.mathExpressionTextField.text, !mathExpression.isEmpty {
-            if mathExpression.containsMathSign() {
+        if !selectedCell.mathExpressionTextField.number.isEmpty {
+            if selectedCell.mathExpressionTextField.number.containsMathSign() {
                 selectedCell.activeField = .mathExpression
                 lastCellWithActiveMathExpressionField = selectedCell
             } else {
-                selectedCell.mathExpressionTextField.text = "" // removes text from mathTF if it doesn't contain a math symbol
+                selectedCell.mathExpressionTextField.number = "" // removes text from mathTF if it doesn't contain a math symbol
                 selectedCell.activeField = .number
             }
         } else {
@@ -257,11 +259,11 @@ extension ConverterVC: NumpadViewDelegate {
     
     func calculateMathExpressionForSelectedCell() {
         guard let selectedCell else { return }
-        guard let mathExpression = selectedCell.mathExpressionTextField.text, !mathExpression.isEmpty else { return }
+        guard !selectedCell.mathExpressionTextField.number.isEmpty else { return }
         
         do {
-            let calculation = try calculate(using: mathExpression.convertingToValidMathExpression())
-            selectedCell.numberTextField.text = calculation.stringWithoutZeroFraction()
+            let calculation = try calculate(using: selectedCell.mathExpressionTextField.number.convertingToValidMathExpression())
+            selectedCell.numberTextField.number = String(calculation)
         } catch {
             print(error)
         }
@@ -269,8 +271,8 @@ extension ConverterVC: NumpadViewDelegate {
     
     func handleDeletePress() {
         guard let activeTextField = selectedCell?.getActiveTextField() else { return }
-        if let activeTextFieldText = activeTextField.text, !activeTextFieldText.isEmpty {
-            activeTextField.text? = String(activeTextField.text?.dropLast() ?? "")
+        if !activeTextField.number.isEmpty {
+            activeTextField.number = String(activeTextField.number.dropLast())
         } else {
             activeTextField.shake()
         }
@@ -278,44 +280,51 @@ extension ConverterVC: NumpadViewDelegate {
     
     func handleDotPress() {
         guard let activeTextField = selectedCell?.getActiveTextField() else { return }
-        guard let activeTextFieldText = activeTextField.text else { return } // FIXME: what will happen if text == nil?
         
-        let lastNumber = getLastNumber(from: activeTextFieldText)
+        let lastNumber = getLastNumber(from: activeTextField.number)
         if lastNumber == "" {
-            activeTextField.text! += "0."
+            activeTextField.number += "0."
         } else if lastNumber.contains(".") {
             return
         } else {
-            activeTextField.text! += "."
+            activeTextField.number += "."
         }
     }
     
     func handleSymbolPress(symbol: String) {
         guard let selectedCell else { return }
-
-        if let mathExpressionTextFieldText = selectedCell.mathExpressionTextField.text, !mathExpressionTextFieldText.isEmpty {
-            if mathExpressionTextFieldText.isLastCharacterMathSign() {
-                selectedCell.mathExpressionTextField.text = mathExpressionTextFieldText.replacingLastCharacter(with: symbol)
+        
+        let mathExpression = selectedCell.mathExpressionTextField.number
+        if !mathExpression.isEmpty {
+            if mathExpression.isLastCharacterMathSign() {
+                selectedCell.mathExpressionTextField.number = mathExpression.replacingLastCharacter(with: symbol)
             } else {
-                selectedCell.mathExpressionTextField.text?.append(symbol)
+                selectedCell.mathExpressionTextField.number.append(symbol)
             }
         } else {
-            if let numberTextFieldText = selectedCell.numberTextField.text, !numberTextFieldText.isEmpty {
-                selectedCell.mathExpressionTextField.text?.append(numberTextFieldText + symbol)
+            if !selectedCell.numberTextField.number.isEmpty {
+                selectedCell.mathExpressionTextField.number.append(selectedCell.numberTextField.number + symbol)
             } else {
-                selectedCell.mathExpressionTextField.text?.append("0.0" + symbol)
+                selectedCell.mathExpressionTextField.number.append("0.0" + symbol)
             }
         }
     }
     
     func handleNumberPress(number: String) {
         guard let activeTextField = selectedCell?.getActiveTextField() else { return }
-        if activeTextField.text == "0" && number == "0" {
+        if let decimalPlaces = Decimal(string: activeTextField.number) {
+            guard decimalPlaces.significantFractionalDecimalDigits < 8 else { // checks if number of fractional digits is < 8
+                activeTextField.shake()
+                return
+            }
+        }
+
+        if activeTextField.number == "0" && number == "0" {
             return
-        } else if activeTextField.text == "0" && number != "0" {
-            activeTextField.text? = number // if TF text is "0" and pressed number is "3", it will replace "0" with "3"
+        } else if activeTextField.number == "0" && number != "0" {
+            activeTextField.number = number // if TF number is "0" and pressed number is "3", it will replace "0" with "3"
         } else {
-            activeTextField.text! += number
+            activeTextField.number += number
         }
     }
     

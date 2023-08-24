@@ -18,7 +18,6 @@ class HeaderView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    
     private func setupViews() {
         let titleLabel = UILabel()
         titleLabel.text = "xCurrency"

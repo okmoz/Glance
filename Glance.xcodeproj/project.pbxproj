@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02813AAE29F7C5D0002B1B32 /* GLTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02813AAD29F7C5D0002B1B32 /* GLTextField.swift */; };
 		0284FF8B29DC848E00D96CB4 /* PersistenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0284FF8A29DC848E00D96CB4 /* PersistenceManager.swift */; };
 		028A81CD29C6441800FA788A /* DINRoundPro.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 028A81C829C6441700FA788A /* DINRoundPro.ttf */; };
 		028A81CE29C6441800FA788A /* DINRoundPro-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 028A81C929C6441700FA788A /* DINRoundPro-Black.ttf */; };
@@ -14,7 +15,6 @@
 		028A81D029C6441800FA788A /* DINRoundPro-Medi.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 028A81CB29C6441700FA788A /* DINRoundPro-Medi.ttf */; };
 		028A81D129C6441800FA788A /* DINRoundPro-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 028A81CC29C6441700FA788A /* DINRoundPro-Light.ttf */; };
 		02953E2029E5769B00F86F7B /* MathExpression in Frameworks */ = {isa = PBXBuildFile; productRef = 02953E1F29E5769B00F86F7B /* MathExpression */; };
-		02953E2529E5BAAC00F86F7B /* Double+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02953E2429E5BAAC00F86F7B /* Double+Ext.swift */; };
 		02A213ED29C3493C0003F362 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A213EC29C3493C0003F362 /* AppDelegate.swift */; };
 		02A213EF29C3493C0003F362 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A213EE29C3493C0003F362 /* SceneDelegate.swift */; };
 		02A213F129C3493C0003F362 /* ConverterVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A213F029C3493C0003F362 /* ConverterVC.swift */; };
@@ -51,13 +51,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		02813AAD29F7C5D0002B1B32 /* GLTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLTextField.swift; sourceTree = "<group>"; };
 		0284FF8A29DC848E00D96CB4 /* PersistenceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceManager.swift; sourceTree = "<group>"; };
 		028A81C829C6441700FA788A /* DINRoundPro.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = DINRoundPro.ttf; sourceTree = "<group>"; };
 		028A81C929C6441700FA788A /* DINRoundPro-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Black.ttf"; sourceTree = "<group>"; };
 		028A81CA29C6441700FA788A /* DINRoundPro-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Bold.ttf"; sourceTree = "<group>"; };
 		028A81CB29C6441700FA788A /* DINRoundPro-Medi.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Medi.ttf"; sourceTree = "<group>"; };
 		028A81CC29C6441700FA788A /* DINRoundPro-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Light.ttf"; sourceTree = "<group>"; };
-		02953E2429E5BAAC00F86F7B /* Double+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Double+Ext.swift"; sourceTree = "<group>"; };
 		02A213E929C3493C0003F362 /* Glance.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Glance.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		02A213EC29C3493C0003F362 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		02A213EE29C3493C0003F362 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -124,7 +124,6 @@
 		02953E2129E5B91A00F86F7B /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
-				02953E2429E5BAAC00F86F7B /* Double+Ext.swift */,
 				02C60CDF29E7F0C200BBFADD /* String+Ext.swift */,
 			);
 			path = Extensions;
@@ -171,6 +170,7 @@
 				02A2140729C4A16C0003F362 /* NumpadView.swift */,
 				02F0C67F29CCC3ED00F84E57 /* HeaderView.swift */,
 				02A2140029C350C10003F362 /* CurrencyCell.swift */,
+				02813AAD29F7C5D0002B1B32 /* GLTextField.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -361,6 +361,7 @@
 				02D23A4429D1A10900CEBA35 /* CurrencyRatesWithDate.swift in Sources */,
 				02A2140329C3515F0003F362 /* Currency.swift in Sources */,
 				02F0C68229CCCCB700F84E57 /* IconManager.swift in Sources */,
+				02813AAE29F7C5D0002B1B32 /* GLTextField.swift in Sources */,
 				02A213F129C3493C0003F362 /* ConverterVC.swift in Sources */,
 				02A213ED29C3493C0003F362 /* AppDelegate.swift in Sources */,
 				02D23A4B29D3577000CEBA35 /* GLError.swift in Sources */,
@@ -368,7 +369,6 @@
 				02A213EF29C3493C0003F362 /* SceneDelegate.swift in Sources */,
 				02F0C68029CCC3ED00F84E57 /* HeaderView.swift in Sources */,
 				02C60CE029E7F0C200BBFADD /* String+Ext.swift in Sources */,
-				02953E2529E5BAAC00F86F7B /* Double+Ext.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

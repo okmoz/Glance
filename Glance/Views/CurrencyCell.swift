@@ -17,10 +17,9 @@ class CurrencyCell: UITableViewCell {
     private let currencyFullNameLabel = UILabel()
     private let blinkingCursorForNumber = UIView()
     private let blinkingCursorForMathExpression = UIView()
-    
-    let numberTextField = UITextField()
-    let mathExpressionTextField = UITextField()
-    
+    let numberTextField = GLTextField()
+    let mathExpressionTextField = GLTextField()
+
     enum ActiveField {
         case number, mathExpression, none
     }
@@ -29,14 +28,20 @@ class CurrencyCell: UITableViewCell {
         didSet {
             switch activeField {
             case .number:
-                isMathExpressionCursorVisible = false
+                isMathExpressionCursorVisible = false // FIXME: make it a property on GLTextField
                 isNumberCursorVisible = true
+                mathExpressionTextField.isOnSelectedCell = true
+                numberTextField.isOnSelectedCell = true
             case .mathExpression:
                 isMathExpressionCursorVisible = true
                 isNumberCursorVisible = false
+                mathExpressionTextField.isOnSelectedCell = true
+                numberTextField.isOnSelectedCell = true
             case .none:
                 isMathExpressionCursorVisible = false
                 isNumberCursorVisible = false
+                mathExpressionTextField.isOnSelectedCell = false
+                numberTextField.isOnSelectedCell = false
             }
         }
     }
@@ -44,18 +49,17 @@ class CurrencyCell: UITableViewCell {
     override func setSelected(_ selected: Bool, animated: Bool) {
         super.setSelected(selected, animated: animated)
         if selected {
-            backgroundColor = UIColor(named: "SelectedCurrencyColor")
-            mathExpressionTextField.isHidden = false
-            
             if let mathExpressionTextFieldText = mathExpressionTextField.text, !mathExpressionTextFieldText.isEmpty {
                 activeField = .mathExpression
             } else {
                 activeField = .number
             }
+            mathExpressionTextField.isHidden = false
+            backgroundColor = UIColor(named: "SelectedCurrencyColor")
         } else {
-            backgroundColor = UIColor(named: "CurrencyBG")
-            mathExpressionTextField.isHidden = true
             activeField = .none
+            mathExpressionTextField.isHidden = true
+            backgroundColor = UIColor(named: "CurrencyBG")
         }
     }
     
@@ -94,7 +98,7 @@ class CurrencyCell: UITableViewCell {
         currencyFullNameLabel.text = "\(currency.name) \(currency.symbol)"
     }
     
-    func getActiveTextField() -> UITextField? {
+    func getActiveTextField() -> GLTextField? {
         switch activeField {
         case .number:
             return numberTextField
@@ -132,8 +136,6 @@ class CurrencyCell: UITableViewCell {
         numberTextField.attributedPlaceholder = NSAttributedString(string: "0.00", attributes: [.foregroundColor: UIColor.label.withAlphaComponent(0.4)])
         numberTextField.textAlignment = .right
         numberTextField.isUserInteractionEnabled = false
-        mathExpressionTextField.isUserInteractionEnabled = false
-//        numberTextField.isUserInteractionEnabled = false
 //        numberTextField.adjustsFontSizeToFitWidth = true
 //        numberTextField.minimumFontSize = 15
         numberTextField.font = UIFont(name: "DIN Round Pro", size: 23)
@@ -142,6 +144,8 @@ class CurrencyCell: UITableViewCell {
         mathExpressionTextField.translatesAutoresizingMaskIntoConstraints = false
         mathExpressionTextField.font = UIFont(name: "DIN Round Pro", size: 11)
         mathExpressionTextField.textAlignment = .right
+        mathExpressionTextField.isUserInteractionEnabled = false
+        
         mathExpressionTextField.layer.opacity = 0.4
 //        mathExpressionTextField.backgroundColor = .green
         
@@ -200,6 +204,10 @@ class CurrencyCell: UITableViewCell {
             currencyFullNameLabel.topAnchor.constraint(equalTo: numberView.bottomAnchor),
             currencyFullNameLabel.rightAnchor.constraint(equalTo: numberView.rightAnchor),
         ])
+    }
+    
+    @objc func textFieldDidChange() {
+        print("didChange")
     }
     
 }
