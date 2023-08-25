@@ -51,6 +51,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0219CF9F2A98ADFA007966F9 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		02813AAD29F7C5D0002B1B32 /* GLTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLTextField.swift; sourceTree = "<group>"; };
 		0284FF8A29DC848E00D96CB4 /* PersistenceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceManager.swift; sourceTree = "<group>"; };
 		028A81C829C6441700FA788A /* DINRoundPro.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = DINRoundPro.ttf; sourceTree = "<group>"; };
@@ -133,6 +134,7 @@
 			isa = PBXGroup;
 			children = (
 				02A2140429C352510003F362 /* TODO.md */,
+				0219CF9F2A98ADFA007966F9 /* LICENSE.md */,
 				02A2140C29C508140003F362 /* README.md */,
 				02A213EB29C3493C0003F362 /* Glance */,
 				02A213EA29C3493C0003F362 /* Products */,
