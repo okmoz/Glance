@@ -1,5 +1,7 @@
 # Glance
 
+**NOTE:** I'm aware of the poor code quality and lack of a solid structure, and I am currently working on refactoring it.
+
 ## Overview
 
 Glance is a simple and intuitive currency converter app built in Swift for iOS. It provides real-time currency conversion rates and supports a wide range of currencies. The app is built using Swift and UIKit, and follows the MVC (Model-View-Controller) design pattern. It uses asynchronous programming with Swift's new async/await syntax for network requests. The app fetches real-time currency rates from an API and stores them locally for offline use.
